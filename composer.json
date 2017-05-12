@@ -1,0 +1,38 @@
+{
+    "name": "wutongwan/flow",
+    "description": "workflow for laravel.",
+    "type": "library",
+    "require": {
+        "php": ">=5.4.0",
+        "illuminate/support": "~5.0",
+        "illuminate/database": "^5.5@dev",
+        "illuminate/routing": "^5.5@dev",
+        "doctrine/dbal": "^2.6@dev"
+    },
+    "require-dev": {
+        "mockery/mockery": "dev-master",
+        "phpunit/phpunit": "^6.1"
+    },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "zhufeng",
+            "email": "zhufeng@dankegongyu.com"
+        }
+    ],
+    "autoload": {
+        "psr-0": {
+            "WuTongWan\\Flow": "src/"
+        },
+        "files": [
+            "src/functions.php"
+        ]
+    },
+    "minimum-stability": "dev",
+    "repositories": {
+        "packagist": {
+            "type": "composer",
+            "url": "https://packagist.phpcomposer.com"
+        }
+    }
+}
