@@ -11,9 +11,9 @@
   "require": {
     "php": ">=5.4.0",
     "illuminate/support": "~5.0",
-    "illuminate/database": "^5.5@dev",
-    "illuminate/routing": "^5.5@dev",
-    "doctrine/dbal": "^2.6@dev"
+    "illuminate/database": "~5.5",
+    "illuminate/routing": "~5.5",
+    "doctrine/dbal": "~2.6"
   },
   "require-dev": {
     "mockery/mockery": "dev-master",
