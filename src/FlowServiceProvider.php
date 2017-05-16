@@ -4,6 +4,7 @@ namespace WuTongWan\Flow;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Routing\Router;
+use WuTongWan\Flow\Containers\Interactive;
 
 class FlowServiceProvider extends ServiceProvider
 {
@@ -28,8 +29,8 @@ class FlowServiceProvider extends ServiceProvider
 
     public function register()
     {
-//        $this->app->bind('flow', function ($app){
-//           return new Flow($app);
-//        });
+        $this->app->bind('flow', function (){
+           return new Interactive();
+        });
     }
 }

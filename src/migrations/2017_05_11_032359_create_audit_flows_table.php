@@ -15,7 +15,7 @@ class CreateAuditFlowsTable extends Migration
     {
         Schema::create('audit_flows', function (Blueprint $table) {
             $table->increments('id');
-            $table->string('bill_id', 255)->unique()->comment('单据ID');
+            $table->string('bill_id', 60)->comment('单据ID');
             $table->unsignedInteger('audit_bill_type_id')->index()->comment('单据类型ID');
             $table->string('title', 60)->comment('审核流名称');
             $table->text('description')->nullable()->comment('审核流描述');
