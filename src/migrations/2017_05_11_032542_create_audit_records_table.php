@@ -15,6 +15,7 @@ class CreateAuditRecordsTable extends Migration
     {
         Schema::create('audit_records', function (Blueprint $table) {
             $table->increments('id');
+            $table->string('bill_id', 60)->comment('单据ID');
             $table->unsignedInteger('audit_flow_id')->index()->comment('审核流ID');
             $table->unsignedInteger('audit_node_id')->index()->comment('节点ID');
             $table->unsignedInteger('audit_user_id')->index()->comment('审核人ID');

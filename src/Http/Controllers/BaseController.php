@@ -78,7 +78,7 @@ class BaseController extends Controller
             ->select("$user_id_field as id", "$user_name_field as name", "$user_email_field as email")
             ->where($user_name_field, 'like', "%$name%")
             ->orWhere($user_email_field, 'like', "%$name%")
-            ->limit(10)
+            ->limit($limit)
             ->get();
     }
 

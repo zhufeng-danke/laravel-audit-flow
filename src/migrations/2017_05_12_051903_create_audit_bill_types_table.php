@@ -15,7 +15,7 @@ class CreateAuditBillTypesTable extends Migration
     {
         Schema::create('audit_bill_types', function (Blueprint $table) {
             $table->increments('id');
-            $table->string('title', 120)->comment('标题');
+            $table->string('title', 120)->comment('资源名称');
             $table->text('description')->nullable()->comment('描述');
             $table->unsignedInteger('creator_id')->index()->comment('创建者ID');
             $table->timestamps();
