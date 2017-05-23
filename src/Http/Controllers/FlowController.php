@@ -8,6 +8,9 @@ class FlowController extends BaseController
     {
         $title = '审核流';
 
+        $model_AuditFlow = new \WuTongWan\Flow\Models\AuditFlow();
+        $list = $model_AuditFlow->select("*")->get();
+        
         return view('flow::index', compact('title'));
     }
 
