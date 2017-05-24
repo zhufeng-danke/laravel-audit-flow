@@ -427,5 +427,37 @@ class FlowController extends BaseController
         }
     }
 
+    public function getBill()
+    {
+        $title = "审核单据列表";
+
+        $model_AuditBillAndFlowRelations = new \WuTongWan\Flow\Models\AuditBillAndFlowRelations();
+        $list = $model_AuditBillAndFlowRelations->setTable('audit_bill_and_flow_relations as r')
+            ->select('r.*','f.title as flow_title','t.title as type_title')
+            ->leftJoin('audit_flows as f', 'f.id', '=', 'r.audit_flow_id')
+            ->leftJoin('audit_bill_types as t', 't.id', '=', 'r.audit_bill_type_id')
+            ->paginate(10);
+
+        return view('flow::bill', compact('title','list'));
+    }
+
+    public function getRecords(Request $request)
+    {
+        $title = "审核操作记录";
+
+        $bill_id = $request->input("bill_id");
+
+        $model_AuditRecord = new \WuTongWan\Flow\Models\AuditRecord();
+        $list = $model_AuditRecord->setTable("audit_records as r")
+                                ->select('r.*','f.title as flow_title','n.title as node_title','u.name','u.email')
+                                ->leftJoin('audit_flows as f', 'f.id', '=', 'r.audit_flow_id')
+                                ->leftJoin('audit_nodes as n', 'n.id', '=', 'r.audit_node_id')
+                                ->leftJoin('audit_associated_user_informations as u', 'u.id', '=', 'r.audit_user_id')
+                                ->where('bill_id','=',$bill_id)
+                                ->get();
+
+        return view('flow::records', compact('title','list'));
+    }
+
 }
 
