@@ -13,4 +13,7 @@ Route::group(['prefix' => 'flow', 'namespace' => 'WuTongWan\Flow\Http\Controller
 
     Route::get('node', ['uses' => 'FlowController@getNode', 'as' => 'flow-node-index']);
     Route::match(['get', 'post'],'createnode', ['uses' => 'FlowController@createNode', 'as' => 'flow-create-node']);
+
+    Route::match(['get', 'post'],'createuser', ['uses' => 'FlowController@createUser', 'as' => 'flow-create-user']);
+    Route::post('deluser', ['uses' => 'FlowController@delUser', 'as' => 'flow-user-del']);
 });

@@ -232,6 +232,16 @@ class FlowController extends BaseController
         $model_AuditNode = new \WuTongWan\Flow\Models\AuditNode();
         $list = $model_AuditNode->select('*')->where('audit_flow_id','=',$flow_id)->orderBy('step','ASC')->get();
 
+        $model_AuditUser = new \WuTongWan\Flow\Models\AuditUser();
+        foreach ($list as $key => $val) {
+            $list[$key]['users'] = $model_AuditUser->select("audit_users.*","audit_associated_user_informations.name","audit_associated_user_informations.email")
+                                    ->leftJoin('audit_associated_user_informations', 'audit_users.audit_associated_user_information_id', '=', 'audit_associated_user_informations.id')
+                                    ->where('audit_users.audit_flow_id','=',$flow_id)
+                                    ->where("audit_users.audit_node_id",'=',$val['id'])
+                                    ->orderBy('audit_users.order','ASC')
+                                    ->get();
+        }
+
         $model_AuditAssociatedUserInformation = new \WuTongWan\Flow\Models\AuditAssociatedUserInformation();
         $user_list = $model_AuditAssociatedUserInformation->getList();
 
@@ -335,6 +345,84 @@ class FlowController extends BaseController
             $model_AuditNode = new \WuTongWan\Flow\Models\AuditNode();
             $data = $model_AuditNode->find($id);
             echo json_encode($data);
+            exit;
+        }
+    }
+
+    //创建审核人
+    public function createUser(Request $request)
+    {
+        $id = $request->input("id");
+
+        if($request->isMethod('post')) {
+
+            $audit_flow_id = $request->input("audit_flow_id");
+
+            $audit_node_id = $request->input("audit_node_id");
+
+            $audit_associated_user_information_id = $request->input("audit_associated_user_information_id");
+            if($audit_associated_user_information_id <= 0) {
+                echo json_encode(['status' => 0, 'message' => '请选择审核人!']);
+                exit;
+            }
+
+            $creator_id = $request->input("creator_id");
+            if($creator_id <= 0) {
+                echo json_encode(['status' => 0, 'message' => '请选择创建者!']);
+                exit;
+            }
+
+            $order = $request->input("order");
+
+            if($id > 0) {
+                $model_AuditUser = new \WuTongWan\Flow\Models\AuditUser();
+                $return = $model_AuditUser->where("id","=",$id)->update(['audit_associated_user_information_id' => $audit_associated_user_information_id,'order' => $order, 'creator_id' => $creator_id]);
+                if($return) {
+                    echo json_encode(['status' => 1, 'message' => '更新成功']);
+                    exit;
+                }else{
+                    echo json_encode(['status' => 0, 'message' => '更新失败']);
+                    exit;
+                }
+            } else {
+                $model_AuditUser = new \WuTongWan\Flow\Models\AuditUser();
+
+                $model_AuditUser->audit_flow_id = $audit_flow_id;
+                $model_AuditUser->audit_node_id = $audit_node_id;
+                $model_AuditUser->audit_associated_user_information_id = $audit_associated_user_information_id;
+                $model_AuditUser->order = $order;
+                $model_AuditUser->creator_id = $creator_id;
+                $model_AuditUser->save();
+                $insert_id = $model_AuditUser->id;
+
+                if($insert_id > 0)
+                {
+                    echo json_encode(['status' => 1, 'message' => '创建成功']);
+                    exit;
+                }else{
+                    echo json_encode(['status' => 0, 'message' => '创建失败']);
+                    exit;
+                }
+            }
+        }else {
+            $model_AuditUser = new \WuTongWan\Flow\Models\AuditUser();
+            $data = $model_AuditUser->find($id);
+            echo json_encode($data);
+            exit;
+        }
+    }
+
+    public function delUser(Request $request)
+    {
+        $id = $request->input("id");
+
+        $model_AuditUser = new \WuTongWan\Flow\Models\AuditUser();
+        $return = $model_AuditUser->where("id","=",$id)->delete();
+        if($return) {
+            echo json_encode(['status' => 1, 'message' => '删除成功']);
+            exit;
+        }else{
+            echo json_encode(['status' => 0, 'message' => '删除失败']);
             exit;
         }
     }

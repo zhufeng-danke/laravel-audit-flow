@@ -134,7 +134,7 @@
 
             //编辑
             $(".edit").click(function () {
-                id = $(this).prop("id");
+                var id = $(this).prop("id");
 
                 $.ajax({
                     type: "GET",
@@ -155,7 +155,7 @@
 
             //删除
             $(".delete").click(function () {
-                id = $(this).prop("id");
+                var id = $(this).prop("id");
                 if(confirm("确定要删除些资源吗!")){
                     $.ajax({
                         type: "POST",
