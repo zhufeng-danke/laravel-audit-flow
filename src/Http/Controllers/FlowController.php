@@ -11,9 +11,18 @@ class FlowController extends BaseController
         $title = '审核流';
 
         $model_AuditFlow = new \WuTongWan\Flow\Models\AuditFlow();
-        $list = $model_AuditFlow->select("*")->get();
+        $list = $model_AuditFlow->setTable("audit_flows as f")->select("f.*","t.title as type_title","u.name")
+                ->leftJoin('audit_bill_types as t','f.audit_bill_type_id','=','t.id')
+                ->leftJoin('audit_associated_user_informations as u','f.creator_id','=','u.id')
+                ->paginate(10);
 
-        return view('flow::index', compact('title','list'));
+        $model_AuditBillType = new \WuTongWan\Flow\Models\AuditBillType();
+        $type_list = $model_AuditBillType->all();
+
+        $model_AuditAssociatedUserInformation = new \WuTongWan\Flow\Models\AuditAssociatedUserInformation();
+        $user_list = $model_AuditAssociatedUserInformation->getList();
+
+        return view('flow::index', compact('title','list','type_list','user_list'));
     }
 
     public function getType()
@@ -21,12 +30,89 @@ class FlowController extends BaseController
         $title = '审核流资源';
 
         $model_AuditBillType = new \WuTongWan\Flow\Models\AuditBillType();
-        $list = $model_AuditBillType->setTable('audit_bill_types as t')->select("t.*","u.name")->leftJoin("audit_associated_user_informations as u",'u.id','=','t.creator_id')->paginate(2);
+        $list = $model_AuditBillType->setTable('audit_bill_types as t')->select("t.*","u.name")->leftJoin("audit_associated_user_informations as u",'u.id','=','t.creator_id')->paginate(10);
 
         $model_AuditAssociatedUserInformation = new \WuTongWan\Flow\Models\AuditAssociatedUserInformation();
         $user_list = $model_AuditAssociatedUserInformation->getList();
 
         return view('flow::type', compact('title','list','user_list'));
+    }
+
+    public function createFlow(Request $request)
+    {
+        $id = $request->input("id");
+
+        if($request->isMethod('post')) {
+
+            $audit_bill_type_id = $request->input("audit_bill_type_id");
+            if($audit_bill_type_id <= 0) {
+                echo json_encode(['status' => 0, 'message' => '请选择资源标识!']);
+                exit;
+            }
+
+            $title = $request->input("title");
+            if(empty($title))
+            {
+                echo json_encode(['status' => 0, 'message' => '请填审核流名称!']);
+                exit;
+            }
+
+            $description = $request->input("description");
+
+            $creator_id = $request->input("creator_id");
+            if($creator_id <= 0) {
+                echo json_encode(['status' => 0, 'message' => '请选择创建者!']);
+                exit;
+            }
+
+            $status = $request->input("status");
+            if(!isset($status)) {
+                echo json_encode(['status' => 0, 'message' => '请选择状态!']);
+                exit;
+            }
+
+            if($id > 0) {
+                $model_AuditFlow = new \WuTongWan\Flow\Models\AuditFlow();
+                $return = $model_AuditFlow->where("id","=",$id)->update(['audit_bill_type_id' => $audit_bill_type_id,'title' => $title, 'description' => $description, 'creator_id' => $creator_id, 'status' => $status]);
+                if($return) {
+                    echo json_encode(['status' => 1, 'message' => '更新成功']);
+                    exit;
+                }else{
+                    echo json_encode(['status' => 0, 'message' => '更新失败']);
+                    exit;
+                }
+            } else {
+                $model_AuditFlow = new \WuTongWan\Flow\Models\AuditFlow();
+
+                $count = $model_AuditFlow->where('title','=',$title)->count();
+                if($count > 0) {
+                    echo json_encode(['status' => 0, 'message' => '资源名称重复,请重新填写!']);
+                    exit;
+                }
+
+                $model_AuditFlow->audit_bill_type_id = $audit_bill_type_id;
+                $model_AuditFlow->title = $title;
+                $model_AuditFlow->description = $description;
+                $model_AuditFlow->creator_id = $creator_id;
+                $model_AuditFlow->status = $status;
+                $model_AuditFlow->save();
+                $insert_id = $model_AuditFlow->id;
+
+                if($insert_id > 0)
+                {
+                    echo json_encode(['status' => 1, 'message' => '创建成功']);
+                    exit;
+                }else{
+                    echo json_encode(['status' => 0, 'message' => '创建失败']);
+                    exit;
+                }
+            }
+        }else {
+            $model_AuditFlow = new \WuTongWan\Flow\Models\AuditFlow();
+            $data = $model_AuditFlow->find($id);
+            echo json_encode($data);
+            exit;
+        }
     }
 
     public function createType(Request $request)
@@ -88,6 +174,29 @@ class FlowController extends BaseController
         }
     }
 
+    public function delFlow(Request $request)
+    {
+        $id = $request->input("id");
+
+        $model_AuditNode = new \WuTongWan\Flow\Models\AuditNode();
+        $count = $model_AuditNode->where("audit_flow_id","=",$id)->count();
+
+        if($count > 0) {
+            echo json_encode(['status' => 0, 'message' => '审核已设置节点,不允许删除!']);
+            exit;
+        }
+
+        $model_AuditFlow = new \WuTongWan\Flow\Models\AuditFlow();
+        $return = $model_AuditFlow->where("id","=",$id)->delete();
+        if($return) {
+            echo json_encode(['status' => 1, 'message' => '删除成功']);
+            exit;
+        }else{
+            echo json_encode(['status' => 0, 'message' => '删除失败']);
+            exit;
+        }
+    }
+
 
     public function delType(Request $request)
     {
@@ -112,6 +221,123 @@ class FlowController extends BaseController
         }
     }
 
+    public function getNode(Request $request)
+    {
+        $title = "设置节点";
+
+        $flow_id = $request->input("flow_id");
+        $model_AuditFlow = new \WuTongWan\Flow\Models\AuditFlow();
+        $flow_info = $model_AuditFlow->find($flow_id);
+
+        $model_AuditNode = new \WuTongWan\Flow\Models\AuditNode();
+        $list = $model_AuditNode->select('*')->where('audit_flow_id','=',$flow_id)->orderBy('step','ASC')->get();
+
+        $model_AuditAssociatedUserInformation = new \WuTongWan\Flow\Models\AuditAssociatedUserInformation();
+        $user_list = $model_AuditAssociatedUserInformation->getList();
+
+        return view('flow::node', compact('title','flow_info','list','user_list'));
+    }
+
+    //创建节点
+    public function createNode(Request $request)
+    {
+        $id = $request->input("id");
+
+        if($request->isMethod('post')) {
+
+            $parent_audit_node_id = $request->input("parent_audit_node_id");
+
+            if($parent_audit_node_id > 0) {
+                $model_AuditNode = new \WuTongWan\Flow\Models\AuditNode();
+                $parent_node_info = $model_AuditNode->find($parent_audit_node_id);
+
+                if(empty($parent_node_info)) {
+                    echo json_encode(['status' => 0, 'message' => '父节点错误!']);
+                    exit;
+                }
+                $step = $parent_node_info->step + 1;
+            }else{
+                $step = 1;
+            }
+
+            $audit_flow_id = $request->input("audit_flow_id");
+
+            $title = $request->input("title");
+            if(empty($title))
+            {
+                echo json_encode(['status' => 0, 'message' => '请填审核流名称!']);
+                exit;
+            }
+
+            $description = $request->input("description");
+
+            $audit_type = $request->input("audit_type");
+
+            $is_end_flow = $request->input("is_end_flow");
+
+            $creator_id = $request->input("creator_id");
+            if($creator_id <= 0) {
+                echo json_encode(['status' => 0, 'message' => '请选择创建者!']);
+                exit;
+            }
+
+            if(!isset($audit_type)) {
+                echo json_encode(['status' => 0, 'message' => '请选择审核类型!']);
+                exit;
+            }
+
+            if(!isset($is_end_flow)) {
+                echo json_encode(['status' => 0, 'message' => '请选择是否终点!']);
+                exit;
+            }
+
+            if($id > 0) {
+                $model_AuditNode = new \WuTongWan\Flow\Models\AuditNode();
+                $return = $model_AuditNode->where("id","=",$id)->update(['parent_audit_node_id' => $parent_audit_node_id,'audit_flow_id' => $audit_flow_id,
+                                            'title' => $title, 'description' => $description, 'step' => $step ,'creator_id' => $creator_id, 'audit_type' => $audit_type, 'is_end_flow' => $is_end_flow]);
+                if($return) {
+                    echo json_encode(['status' => 1, 'message' => '更新成功']);
+                    exit;
+                }else{
+                    echo json_encode(['status' => 0, 'message' => '更新失败']);
+                    exit;
+                }
+            } else {
+                $model_AuditNode = new \WuTongWan\Flow\Models\AuditNode();
+
+                $count = $model_AuditNode->where('title','=',$title)->count();
+                if($count > 0) {
+                    echo json_encode(['status' => 0, 'message' => '资源名称重复,请重新填写!']);
+                    exit;
+                }
+
+                $model_AuditNode->parent_audit_node_id = $parent_audit_node_id;
+                $model_AuditNode->audit_flow_id = $audit_flow_id;
+                $model_AuditNode->title = $title;
+                $model_AuditNode->description = $description;
+                $model_AuditNode->step = $step;
+                $model_AuditNode->audit_type = $audit_type;
+                $model_AuditNode->is_end_flow = $is_end_flow;
+                $model_AuditNode->creator_id = $creator_id;
+                $model_AuditNode->save();
+                $insert_id = $model_AuditNode->id;
+
+                if($insert_id > 0)
+                {
+                    echo json_encode(['status' => 1, 'message' => '创建成功']);
+                    exit;
+                }else{
+                    echo json_encode(['status' => 0, 'message' => '创建失败']);
+                    exit;
+                }
+            }
+        }else {
+            $model_AuditNode = new \WuTongWan\Flow\Models\AuditNode();
+            $data = $model_AuditNode->find($id);
+            echo json_encode($data);
+            exit;
+        }
+    }
 
 }
 
