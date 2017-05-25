@@ -6,9 +6,14 @@ use Illuminate\Http\Request;
 
 class FlowController extends BaseController
 {
-    public function index()
+    public function index(Request $request)
     {
         $title = '审核流';
+
+        //创建者ID 业务中用户ID
+        $origin_user_id = $request->input('user_id');
+
+        $user_info = self::getUserInfoByUserId($origin_user_id);
 
         $model_AuditFlow = new \WuTongWan\Flow\Models\AuditFlow();
         $list = $model_AuditFlow->setTable("audit_flows as f")->select("f.*","t.title as type_title","u.name")
@@ -19,10 +24,16 @@ class FlowController extends BaseController
         $model_AuditBillType = new \WuTongWan\Flow\Models\AuditBillType();
         $type_list = $model_AuditBillType->all();
 
-        $model_AuditAssociatedUserInformation = new \WuTongWan\Flow\Models\AuditAssociatedUserInformation();
-        $user_list = $model_AuditAssociatedUserInformation->getList();
+        if(!empty($origin_user_id) && !empty($user_info)) {
+            $model_AuditAssociatedUserInformation = new \WuTongWan\Flow\Models\AuditAssociatedUserInformation();
+            $user_list = $model_AuditAssociatedUserInformation->where("origin_user_id","=",$origin_user_id)->get();
+        }else{
+            $model_AuditAssociatedUserInformation = new \WuTongWan\Flow\Models\AuditAssociatedUserInformation();
+            $user_list = $model_AuditAssociatedUserInformation->get();
+        }
 
-        return view('flow::index', compact('title','list','type_list','user_list'));
+
+        return view('flow::index', compact('title','list','type_list','user_list','user_info'));
     }
 
     public function getType()
@@ -457,6 +468,56 @@ class FlowController extends BaseController
                                 ->get();
 
         return view('flow::records', compact('title','list'));
+    }
+
+    //创建单据和工作流关系
+    public function createBillFlowRelations(Request $request)
+    {
+        $bill_id = $request->input("bill_id");
+        $title = $request->input("title");
+        $origin_user_id = $request->input('user_id');
+
+        $user_info = self::getUserInfoByUserId($origin_user_id);
+
+        $model_AuditBillAndFlowRelations = new \WuTongWan\Flow\Models\AuditBillAndFlowRelations();
+        $bill_flow_info = $model_AuditBillAndFlowRelations->where('bill_id','=',$bill_id)->get();
+
+        if($bill_flow_info) {
+            redirect()->action('WuTongWan\Flow\Http\Controllers\FlowController@getRecords',['bill_id' => $bill_id]);
+        }else{
+            $model_AuditBillType = new \WuTongWan\Flow\Models\AuditBillType();
+            $bill_type_info = $model_AuditBillType->where('title','=',$title)->get();
+
+            if($bill_type_info) {
+                $model_AuditFlow = new \WuTongWan\Flow\Models\AuditFlow();
+                $flow_info = $model_AuditFlow->where('audit_bill_type_id','=',$bill_type_info->id)->get();
+
+                if($flow_info->status != 1) {
+                    echo '资源未启用!';
+                    exit;
+                }
+
+                if($flow_info) {
+                    $model_AuditBillAndFlowRelations->bill_id = $bill_id;
+                    $model_AuditBillAndFlowRelations->audit_flow_id = $flow_info->id;
+                    $model_AuditBillAndFlowRelations->audit_bill_type_id = $bill_type_info->id;
+                    $model_AuditBillAndFlowRelations->creator_id = $user_info->id;
+                    $model_AuditBillAndFlowRelations->save();
+
+                    if($model_AuditBillAndFlowRelations->id > 0) {
+                        redirect()->action('WuTongWan\Flow\Http\Controllers\FlowController@getBill');
+                    }else{
+                        echo '创建失败,请重新操作!';
+                        exit;
+                    }
+                }else{
+                    echo '未打到审核流';
+                    exit;
+                }
+
+            }
+
+        }
     }
 
 }

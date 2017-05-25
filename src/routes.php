@@ -19,4 +19,6 @@ Route::group(['prefix' => 'flow', 'namespace' => 'WuTongWan\Flow\Http\Controller
 
     Route::get('bill', ['uses' => 'FlowController@getBill', 'as' => 'flow-bill-index']);
     Route::get('records', ['uses' => 'FlowController@getRecords', 'as' => 'flow-records-index']);
+
+    Route::get('create_relations', ['uses' => 'FlowController@createBillFlowRelations', 'as' => 'create-bill-flow-relations']);
 });
