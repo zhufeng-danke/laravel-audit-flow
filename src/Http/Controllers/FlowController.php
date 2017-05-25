@@ -453,7 +453,7 @@ class FlowController extends BaseController
                                 ->leftJoin('audit_flows as f', 'f.id', '=', 'r.audit_flow_id')
                                 ->leftJoin('audit_nodes as n', 'n.id', '=', 'r.audit_node_id')
                                 ->leftJoin('audit_associated_user_informations as u', 'u.id', '=', 'r.audit_user_id')
-                                ->where('bill_id','=',$bill_id)
+                                ->where('r.bill_id','=',$bill_id)
                                 ->get();
 
         return view('flow::records', compact('title','list'));
