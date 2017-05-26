@@ -124,7 +124,6 @@ class Interactive
     {
         // 查询审核信息
         $audit_users = $this->queryAuditUserByOriginUserIdOrBillId($origin_user_id, $bill_id);
-        dump($audit_users);
 
         // 查询审核记录
         $audit_users_with_records = $this->queryAuditRecords($audit_users);
