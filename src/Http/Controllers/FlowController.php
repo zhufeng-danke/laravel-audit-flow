@@ -520,5 +520,23 @@ class FlowController extends BaseController
         }
     }
 
+    //关闭单据审核流
+    public function billClose(Request $request)
+    {
+        $id = $request->input("id");
+        $status = $request->input('status');
+
+        $model_AuditBillAndFlowRelations = new \WuTongWan\Flow\Models\AuditBillAndFlowRelations();
+        $return = $model_AuditBillAndFlowRelations->where('id','=',$id)->update(['status' => $status]);
+
+        if($return) {
+            echo json_encode(['status' => 1, 'message' => '关闭成功']);
+            exit;
+        }else{
+            echo json_encode(['status' => 0, 'message' => '关闭失败']);
+            exit;
+        }
+    }
+
 }
 
