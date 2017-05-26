@@ -4,6 +4,8 @@ namespace WuTongWan\Flow\Models;
 
 class AuditBillAndFlowRelations extends BaseModel
 {
+    protected $fillable = ['bill_id','audit_flow_id','creator_id','audit_bill_type_id'];
+
     //获取审核流详情方法
     public function getFlowInfo($bill_id)
     {

@@ -5,6 +5,7 @@ namespace WuTongWan\Flow\Containers;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use WuTongWan\Flow\Models\AuditBillAndFlowRelations;
+use WuTongWan\Flow\Models\AuditFlow;
 
 class Interactive
 {
@@ -48,6 +49,62 @@ class Interactive
                 'flows' => $resource
             ]
         ];
+    }
+
+    public function billBindFlow($bill_id, $flow_id, $user_id = ''){
+        //获取用户在流系统中的ID
+        $userInfo = $this->getOriginUserInfoByUserId($user_id);
+        //无法获取用户信息
+        if(!$userInfo){
+            return false;
+        }
+
+        //判断是否已绑定
+        $relation = AuditBillAndFlowRelations::where('bill_id',$bill_id)->where('audit_flow_id',$flow_id)->first();
+        if($relation){
+            return false;
+        }
+
+        $flow = AuditFlow::find($flow_id);
+        if(!$flow){
+            return false;
+        }
+
+        do{
+            $flag = AuditBillAndFlowRelations::create(['bill_id'=>$bill_id,'audit_flow_id'=>$flow_id,'audit_bill_type_id'=>$flow->audit_bill_type_id,'creator_id'=>$userInfo->id]);
+        }while(!$flag);
+
+        return true;
+    }
+
+    public function getOriginUserInfoByUserId($user_id)
+    {
+        if (!$user_id or !$configInfo = $this->userConfigInfo()) {
+            return false;
+        }
+
+        list($connection, $user_table, $user_id_field, $user_name_field, $user_email_field) = array_values($configInfo);
+
+        return DB::connection($connection)
+            ->table($user_table)
+            ->select("$user_id_field as id", "$user_name_field as name", "$user_email_field as email")
+            ->where("$user_id_field", $user_id)
+            ->first();
+    }
+
+    public function userConfigInfo()
+    {
+        $connection = \Config::get('flow.connection');
+        $user_table = \Config::get('flow.user_table');
+        $user_id_field = \Config::get('flow.user_id_field');
+        $user_name_field = \Config::get('flow.user_name_field');
+        $user_email_field = \Config::get('flow.user_email_field');
+
+        if (!$connection or !$user_table or !$user_id_field or !$user_name_field or !$user_email_field or !$user_name_field) {
+            return false;
+        }
+
+        return compact('connection', 'user_table', 'user_id_field', 'user_name_field', 'user_email_field');
     }
 
     /**
