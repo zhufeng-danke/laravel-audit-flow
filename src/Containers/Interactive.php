@@ -306,7 +306,7 @@ INNER JOIN audit_users au ON au.audit_associated_user_information_id = aaui.id
 INNER JOIN audit_nodes an ON an.id = au.audit_node_id
 INNER JOIN audit_flows af ON af.id = an.audit_flow_id
 INNER JOIN audit_bill_and_flow_relations abafr ON abafr.audit_flow_id = af.id
-WHERE aaui.origin_user_id = ?
+WHERE aaui.origin_user_id = ? and abafr.status = 1
 ORDER BY af.id ASC, an.parent_audit_node_id ASC            
             ";
 
@@ -337,7 +337,7 @@ INNER JOIN audit_users au ON au.audit_associated_user_information_id = aaui.id
 INNER JOIN audit_nodes an ON an.id = au.audit_node_id
 INNER JOIN audit_flows af ON af.id = an.audit_flow_id
 INNER JOIN audit_bill_and_flow_relations abafr ON abafr.audit_flow_id = af.id
-WHERE abafr.bill_id = ?
+WHERE abafr.bill_id = ? and abafr.status = 1
 ORDER BY af.id ASC, an.parent_audit_node_id ASC            
             ";
 
@@ -369,7 +369,7 @@ INNER JOIN audit_users au ON au.audit_associated_user_information_id = aaui.id
 INNER JOIN audit_nodes an ON an.id = au.audit_node_id
 INNER JOIN audit_flows af ON af.id = an.audit_flow_id
 INNER JOIN audit_bill_and_flow_relations abafr ON abafr.audit_flow_id = af.id
-WHERE aaui.origin_user_id = ? and abafr.bill_id = ?
+WHERE aaui.origin_user_id = ? and abafr.bill_id = ? and abafr.status = 1
 ORDER BY af.id ASC, an.parent_audit_node_id ASC            
             ";
 
