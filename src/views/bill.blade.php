@@ -28,6 +28,7 @@
                                         <td>{{ $v->type_title }}</td>
                                         <td>{{ $v->created_at }}</td>
                                         <td>
+                                            <button type="button" class="btn btn-success" id="{{ $v->id }}">关闭</button>
                                             <a class="btn btn-default" href="{{ action('\WuTongWan\Flow\Http\Controllers\FlowController@getRecords',['bill_id' => $v->bill_id]) }}" role="button">查看</a>
                                         </td>
                                     </tr>
