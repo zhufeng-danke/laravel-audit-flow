@@ -51,28 +51,34 @@ class Interactive
         ];
     }
 
-    public function billBindFlow($bill_id, $flow_id, $user_id = ''){
+    public function billBindFlow($bill_id, $flow_id, $user_id = '')
+    {
         //获取用户在流系统中的ID
         $userInfo = $this->getOriginUserInfoByUserId($user_id);
         //无法获取用户信息
-        if(!$userInfo){
+        if (!$userInfo) {
             return false;
         }
 
         //判断是否已绑定
-        $relation = AuditBillAndFlowRelations::where('bill_id',$bill_id)->where('audit_flow_id',$flow_id)->first();
-        if($relation){
+        $relation = AuditBillAndFlowRelations::where('bill_id', $bill_id)->where('audit_flow_id', $flow_id)->first();
+        if ($relation) {
             return false;
         }
 
         $flow = AuditFlow::find($flow_id);
-        if(!$flow){
+        if (!$flow) {
             return false;
         }
 
-        do{
-            $flag = AuditBillAndFlowRelations::create(['bill_id'=>$bill_id,'audit_flow_id'=>$flow_id,'audit_bill_type_id'=>$flow->audit_bill_type_id,'creator_id'=>$userInfo->id]);
-        }while(!$flag);
+        do {
+            $flag = AuditBillAndFlowRelations::create([
+                'bill_id' => $bill_id,
+                'audit_flow_id' => $flow_id,
+                'audit_bill_type_id' => $flow->audit_bill_type_id,
+                'creator_id' => $userInfo->id
+            ]);
+        } while (!$flag);
 
         return true;
     }
@@ -117,6 +123,7 @@ class Interactive
     {
         // 查询审核信息
         $audit_users = $this->queryAuditUserByOriginUserIdOrBillId($origin_user_id, $bill_id);
+        dump($audit_users);
 
         // 查询审核记录
         $audit_users_with_records = $this->queryAuditRecords($audit_users);
@@ -193,11 +200,13 @@ WHERE au.id = ?
         if (count($audit_users)) {
             foreach ($audit_users as $key => $audit_user) {
                 $audit_user_id = $audit_user->audit_user_id;
+                $audit_node_id = $audit_user->audit_node_id;
+                $bill_id = $audit_user->bill_id;
                 if (!is_int($audit_user_id) || $audit_user_id <= 0) {
                     continue;
                 }
 
-                $audit_records = $this->queryAuditRecordById($audit_user_id);
+                $audit_records = $this->queryAuditRecordById($audit_user_id, $audit_node_id, $bill_id);
                 $audit_records_len = count($audit_records);
                 if ($audit_records_len) {
                     $audit_users[$key]->current_action = $audit_records[$audit_records_len - 1]->action;
@@ -215,7 +224,7 @@ WHERE au.id = ?
      * @param $id
      * @return mixed
      */
-    public function queryAuditRecordById($id)
+    public function queryAuditRecordById($id, $node_id, $bill_id)
     {
         $sql = "
 SELECT
@@ -233,10 +242,12 @@ end as 'action_description',
 ar.`comment`
 FROM audit_users au
 INNER JOIN audit_records ar ON ar.audit_user_id = au.id
-WHERE au.id = ?        
+WHERE au.id = ?   
+AND ar.audit_node_id = ?
+AND  ar.bill_id = ?    
         ";
 
-        return DB::select($sql, [$id]);
+        return DB::select($sql, [$id, $node_id, $bill_id]);
     }
 
     /**
