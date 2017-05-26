@@ -28,7 +28,11 @@
                                         <td>{{ $v->type_title }}</td>
                                         <td>{{ $v->created_at }}</td>
                                         <td>
-                                            <button type="button" class="btn btn-success" id="{{ $v->id }}">关闭</button>
+                                            @if($v->status == 1)
+                                                <button type="button" class="btn btn-success flow_close" status="0" id="{{ $v->id }}">关闭</button>
+                                            @else
+                                                <button type="button" class="btn btn-success flow_close" status="1" id="{{ $v->id }}">开启</button>
+                                            @endif
                                             <a class="btn btn-default" href="{{ action('\WuTongWan\Flow\Http\Controllers\FlowController@getRecords',['bill_id' => $v->bill_id]) }}" role="button">查看</a>
                                         </td>
                                     </tr>
@@ -47,6 +51,34 @@
 @section('java-script')
     <script>
         $(document).ready(function(){
+
+            $(".flow_close").click(function () {
+
+                var id = $(this).prop("id");
+                var status = $(this).attr("status");
+
+                if(status == 0) {
+                    var msg = '确定要关闭此单据审核流吗!';
+                }else {
+                    var msg = '确定要开启此单据审核流吗!';
+                }
+
+                if(confirm(msg)){
+                    $.ajax({
+                        type: "POST",
+                        url: "{{ action('\WuTongWan\Flow\Http\Controllers\FlowController@billClose') }}",
+                        data: {'id':id,'status':status},
+                        dataType: 'json',
+                        success: function(data){
+                            if(data.status == 1) {
+                                window.location.reload();
+                            }else {
+                                alert(data.message);
+                            }
+                        }
+                    });
+                }
+            });
 
         })
     </script>
