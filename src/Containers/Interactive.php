@@ -13,6 +13,7 @@ class Interactive
     const FLOW_RECORD_ROUTE_NAME = 'flow-records-index';
     const FLOW_CREATE_ROUTE_NAME = 'flow-index';
     const FLOW_BIND_BILL_ID_ROUTE_NAME = 'create-bill-flow-relations';
+    const FLOW_CHECK_STATUS_TERMINATE = 2;
 
     /**
      * 查询单据流信息
@@ -165,6 +166,11 @@ class Interactive
                 'updated_at' => Carbon::now()
             ]);
         } while (!$id);
+
+        //终止时，更新audit_bill_and_flow_relations表status为0
+        if(self::FLOW_CHECK_STATUS_TERMINATE == $action){
+            AuditBillAndFlowRelations::where('bill_id',$bill_id)->where('audit_flow_id',$audit_user[0]->audit_flow_id)->update(['status'=>0]);
+        }
 
         return true;
     }
