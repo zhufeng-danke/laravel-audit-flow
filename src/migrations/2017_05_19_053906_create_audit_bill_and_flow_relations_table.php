@@ -16,9 +16,10 @@ class CreateAuditBillAndFlowRelationsTable extends Migration
         Schema::create('audit_bill_and_flow_relations', function (Blueprint $table) {
             $table->increments('id');
             $table->string('bill_id',100)->index()->default('')->comment('单据ID');
-            $table->unsignedInteger('audit_flow_id')->index()->comment('流ID');
-            $table->unsignedInteger('audit_bill_type_id')->index()->comment('资源ID');
+            $table->unsignedInteger('audit_flow_id')->index()->comment('审核流ID');
+            $table->unsignedInteger('audit_bill_type_id')->index()->comment('审核类型ID');
             $table->unsignedInteger('creator_id')->index();
+            $table->tinyInteger('status')->default(1)->comment('审核流状态：1，正常；0，终止。');
             $table->timestamps();
         });
     }
