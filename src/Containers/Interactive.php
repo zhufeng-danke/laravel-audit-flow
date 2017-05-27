@@ -61,25 +61,26 @@ class Interactive
         //单据已绑定资源
         $relation = AuditBillAndFlowRelations::where('bill_id', $bill_id)->first();
         if ($relation) {
-            return $this->updateResult($relation->id, '1', '已生成流',
+            return $this->updateResult($relation->id, $relation->audit_flow_id, '1', '已生成流',
                 route(self::FLOW_RECORD_ROUTE_NAME, ['bill_id' => $relation->bill_id, 'user_id' => $user_id]));
         }
 
         //单据未绑定资源
         $flows = DB::table('audit_flows')->select('id as flow_id', 'title')->where('status', 1)->get();
         if (!count($flows)) {
-            return $this->updateResult(0, '0', '无可用流，请先创建流。',
+            return $this->updateResult(0, 0, '0', '无可用流，请先创建流。',
                 route(self::FLOW_CREATE_ROUTE_NAME, ['user_id' => $user_id]));
         }
 
-        return $this->updateResult(0, '2', '未绑定流；从返回的流中选择，进行绑定。', self::FLOW_BIND_BILL_ID_ROUTE_NAME,
+        return $this->updateResult(0, 0, '2', '未绑定流；从返回的流中选择，进行绑定。', self::FLOW_BIND_BILL_ID_ROUTE_NAME,
             $flows->toArray());
     }
 
-    public function updateResult($id, $status = 0, $msg = '异常', $url = '', $resource = '')
+    public function updateResult($id, $flow_id = 0, $status = 0, $msg = '异常', $url = '', $resource = '')
     {
         return [
             'relation_id' => $id,
+            'flow_id' => $flow_id,
             'status' => $status,
             'data' => [
                 'msg' => $msg,
