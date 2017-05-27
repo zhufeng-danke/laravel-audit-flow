@@ -460,14 +460,31 @@ class FlowController extends BaseController
 
         $model_AuditRecord = new \WuTongWan\Flow\Models\AuditRecord();
         $list = $model_AuditRecord->setTable("audit_records as r")
-                                ->select('r.*','f.title as flow_title','n.title as node_title','u.name','u.email')
+                                ->select('r.*','f.title as flow_title','n.title as node_title','ui.name','ui.email')
                                 ->leftJoin('audit_flows as f', 'f.id', '=', 'r.audit_flow_id')
                                 ->leftJoin('audit_nodes as n', 'n.id', '=', 'r.audit_node_id')
-                                ->leftJoin('audit_associated_user_informations as u', 'u.id', '=', 'r.audit_user_id')
+                                ->leftJoin('audit_users as u', 'u.id', '=', 'r.audit_user_id')
+                                ->leftJoin('audit_associated_user_informations as ui', 'ui.id', '=', 'u.audit_associated_user_information_id')
                                 ->where('r.bill_id','=',$bill_id)
                                 ->get();
 
-        return view('flow::records', compact('title','list'));
+        $model_AuditBillAndFlowRelations = new \WuTongWan\Flow\Models\AuditBillAndFlowRelations();
+        $relations_info = $model_AuditBillAndFlowRelations->where('bill_id','=',$bill_id)->first();
+
+        $model_AuditNode = new \WuTongWan\Flow\Models\AuditNode();
+        $node_list = $model_AuditNode->select('*')->where('audit_flow_id','=',$relations_info->audit_flow_id)->orderBy('step','ASC')->get();
+
+        $model_AuditUser = new \WuTongWan\Flow\Models\AuditUser();
+        foreach ($node_list as $key => $val) {
+            $node_list[$key]['users'] = $model_AuditUser->select("audit_users.*","audit_associated_user_informations.name","audit_associated_user_informations.email")
+                ->leftJoin('audit_associated_user_informations', 'audit_users.audit_associated_user_information_id', '=', 'audit_associated_user_informations.id')
+                ->where('audit_users.audit_flow_id','=',$relations_info->audit_flow_id)
+                ->where("audit_users.audit_node_id",'=',$val['id'])
+                ->orderBy('audit_users.order','ASC')
+                ->get();
+        }
+
+        return view('flow::records', compact('title','list','node_list'));
     }
 
     //创建单据和工作流关系
@@ -536,6 +553,32 @@ class FlowController extends BaseController
             echo json_encode(['status' => 0, 'message' => '关闭失败']);
             exit;
         }
+    }
+
+    public function getBillNode(Request $request)
+    {
+        $title = "单据审核节点";
+
+        $bill_id = $request->input("bill_id");
+
+
+        $model_AuditBillAndFlowRelations = new \WuTongWan\Flow\Models\AuditBillAndFlowRelations();
+        $relations_info = $model_AuditBillAndFlowRelations->where('bill_id','=',$bill_id)->first();
+
+        $model_AuditNode = new \WuTongWan\Flow\Models\AuditNode();
+        $node_list = $model_AuditNode->select('*')->where('audit_flow_id','=',$relations_info->audit_flow_id)->orderBy('step','ASC')->get();
+
+        $model_AuditUser = new \WuTongWan\Flow\Models\AuditUser();
+        foreach ($node_list as $key => $val) {
+            $node_list[$key]['users'] = $model_AuditUser->select("audit_users.*","audit_associated_user_informations.name","audit_associated_user_informations.email")
+                ->leftJoin('audit_associated_user_informations', 'audit_users.audit_associated_user_information_id', '=', 'audit_associated_user_informations.id')
+                ->where('audit_users.audit_flow_id','=',$relations_info->audit_flow_id)
+                ->where("audit_users.audit_node_id",'=',$val['id'])
+                ->orderBy('audit_users.order','ASC')
+                ->get();
+        }
+
+        return view('flow::bill_node', compact('title','node_list'));
     }
 
 }
