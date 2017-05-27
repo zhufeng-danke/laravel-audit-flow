@@ -4,16 +4,51 @@ namespace WuTongWan\Flow\Containers;
 
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use WuTongWan\Flow\Models\AuditAssociatedUserInformation;
 use WuTongWan\Flow\Models\AuditBillAndFlowRelations;
 use WuTongWan\Flow\Models\AuditFlow;
+use WuTongWan\Flow\Models\AuditRecord;
 
 class Interactive
 {
-
     const FLOW_RECORD_ROUTE_NAME = 'flow-records-index';
     const FLOW_CREATE_ROUTE_NAME = 'flow-index';
     const FLOW_BIND_BILL_ID_ROUTE_NAME = 'create-bill-flow-relations';
+    const FLOW_CHECK_STATUS_PASS = 1;
     const FLOW_CHECK_STATUS_TERMINATE = 2;
+    const FLOW_CHECK_STATUS_CANCEL = 3;
+
+    //删除单据绑定流
+    public function deleteBillRelation($relation_id, $bill_id, $flow_id, $user_id)
+    {
+        //有无审核记录
+        $records = $this->queryRecordsByBillIdAndFlowId($bill_id, $flow_id);
+        if (count($records)) {
+            return false;
+        }
+
+        $userInfo = AuditAssociatedUserInformation::where('origin_user_id', $user_id)->first();
+        if (!$userInfo) {
+            return false;
+        }
+
+        AuditBillAndFlowRelations::where('creator_id', $userInfo->id)->where('id',$relation_id)->delete();
+
+        return true;
+    }
+
+    /**
+     * 查询审核记录
+     * @param $bill_id
+     * @param $flow_id
+     * @param $user_id
+     * @return mixed
+     */
+    public function queryRecordsByBillIdAndFlowId($bill_id, $flow_id)
+    {
+
+        return AuditRecord::where('bill_id', $bill_id)->where('audit_flow_id', $flow_id)->get();
+    }
 
     /**
      * 查询单据流信息
@@ -26,23 +61,25 @@ class Interactive
         //单据已绑定资源
         $relation = AuditBillAndFlowRelations::where('bill_id', $bill_id)->first();
         if ($relation) {
-            return $this->updateResult('1', '已生成流',
+            return $this->updateResult($relation->id, '1', '已生成流',
                 route(self::FLOW_RECORD_ROUTE_NAME, ['bill_id' => $relation->bill_id, 'user_id' => $user_id]));
         }
 
         //单据未绑定资源
         $flows = DB::table('audit_flows')->select('id as flow_id', 'title')->where('status', 1)->get();
         if (!count($flows)) {
-            return $this->updateResult('0', '无可用流，请先创建流。',
+            return $this->updateResult(0, '0', '无可用流，请先创建流。',
                 route(self::FLOW_CREATE_ROUTE_NAME, ['user_id' => $user_id]));
         }
 
-        return $this->updateResult('2', '未绑定流；从返回的流中选择，进行绑定。', self::FLOW_BIND_BILL_ID_ROUTE_NAME, $flows->toArray());
+        return $this->updateResult(0, '2', '未绑定流；从返回的流中选择，进行绑定。', self::FLOW_BIND_BILL_ID_ROUTE_NAME,
+            $flows->toArray());
     }
 
-    public function updateResult($status = 0, $msg = '异常', $url = '', $resource = '')
+    public function updateResult($id, $status = 0, $msg = '异常', $url = '', $resource = '')
     {
         return [
+            'relation_id' => $id,
             'status' => $status,
             'data' => [
                 'msg' => $msg,
@@ -167,8 +204,9 @@ class Interactive
         } while (!$id);
 
         //终止时，更新audit_bill_and_flow_relations表status为0
-        if(self::FLOW_CHECK_STATUS_TERMINATE == $action){
-            AuditBillAndFlowRelations::where('bill_id',$bill_id)->where('audit_flow_id',$audit_user[0]->audit_flow_id)->update(['status'=>0]);
+        if (self::FLOW_CHECK_STATUS_TERMINATE == $action) {
+            AuditBillAndFlowRelations::where('bill_id', $bill_id)->where('audit_flow_id',
+                $audit_user[0]->audit_flow_id)->update(['status' => 0]);
         }
 
         return true;
