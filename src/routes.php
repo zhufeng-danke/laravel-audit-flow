@@ -18,6 +18,7 @@ Route::group(['prefix' => 'flow', 'namespace' => 'WuTongWan\Flow\Http\Controller
     Route::post('deluser', ['uses' => 'FlowController@delUser', 'as' => 'flow-user-del']);
 
     Route::get('bill', ['uses' => 'FlowController@getBill', 'as' => 'flow-bill-index']);
+    Route::get('show_node', ['uses' => 'FlowController@getBillNode', 'as' => 'flow-bill-node']);
     Route::post('bill_close', ['uses' => 'FlowController@billClose', 'as' => 'flow-bill-close']);
     Route::get('records', ['uses' => 'FlowController@getRecords', 'as' => 'flow-records-index']);
 
