@@ -95,6 +95,11 @@
 @section('java-script')
     <script>
         $(document).ready(function(){
+
+            @if ($user_info)
+                $("#creator_id").find("option[value='"+{{ $user_info->id }}+"']").prop("selected",true);
+                $("#creator_id").prop("disabled",true);
+            @endif
             
             //保存
             $("#save").click(function () {
