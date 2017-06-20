@@ -39,7 +39,12 @@
     
     php artisan vendor:publish
     
-命令执行后，在config目录下新增flow.php文件，即扩展包的配置文件（配置用户信息表相关信息）
+命令执行后:
+
+    在config目录下新增flow.php文件，即扩展包的配置文件（配置用户信息表相关信息）;
+    
+    在routes目录下新增flow.php文件，即扩展包的路由文件；在web.php文件末尾中添加 "require base_path('routes/flow.php');" 语句引入扩展包路由；以此方便在路由文件flow.php中添加权限控制。
+
     
 ## 配置.env文件中数据库相关字段
 
