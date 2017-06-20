@@ -10,6 +10,7 @@
                         <button type="button" class="btn btn-primary btn-lg lego-right-top-buttons pull-right" data-toggle="modal" data-target="#myModal">
                             创建审核流
                         </button>
+                        <a class="btn btn-primary btn-lg lego-right-top-buttons pull-right" href="{{ action('\WuTongWan\Flow\Http\Controllers\FlowController@getType') }}" role="button">创建资源</a>
                         <div class="ibox-content">
                             <table class="table">
                                 <thead>
