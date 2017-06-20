@@ -18,7 +18,7 @@ class BaseController extends Controller
     public function getUserInfoByUserId($user_id)
     {
         // 判断用户信息是否在audit_associated_user_informations表中
-        $UserInfo = AuditAssociatedUserInformation::where('origin_user_id','=',$user_id)->get();
+        $UserInfo = AuditAssociatedUserInformation::where('origin_user_id','=',$user_id)->first();
         if ($UserInfo) {
             return $UserInfo;
         }

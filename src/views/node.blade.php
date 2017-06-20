@@ -202,12 +202,17 @@
                     }
                 });
             });
-            
+
             //下级节点
             $(".next_node").click(function () {
                 var id = id = $(this).prop("id");
 
                 var panel_title = $(this).parent().parent().find(".panel-title").html();
+
+                @if ($user_info)
+                    $("#creator_id").find("option[value='"+{{ $user_info->id }}+"']").prop("selected",true);
+                    $("#creator_id").prop("disabled",true);
+                @endif
 
                 $("#myModalLabel").html("创建‘"+panel_title+"’下级节点");
                 $("#parent_audit_node_id").val(id);
@@ -234,6 +239,11 @@
                         $("#description").val(data.description);
                         $("#creator_id").find("option[value='"+data.creator_id+"']").prop("selected",true);
 
+                        @if ($user_info)
+                        $("#creator_id").find("option[value='"+{{ $user_info->id }}+"']").prop("selected",true);
+                        $("#creator_id").prop("disabled",true);
+                        @endif
+
                         $(":radio[name='audit_type'][value='" + data.audit_type + "']").prop("checked", "checked");
                         $(":radio[name='is_end_flow'][value='" + data.is_end_flow + "']").prop("checked", "checked");
 
@@ -242,7 +252,7 @@
                 });
 
             });
-            
+
             //设置审核人
             $(".node_user").click(function () {
                 var id = $(this).prop("id");
@@ -251,6 +261,11 @@
                 $("#userModalLabel").html("添加‘"+panel_title+"’节点审核人");
 
                 $("#audit_node_id").val(id);
+
+                @if ($user_info)
+                $("#user_creator_id").find("option[value='"+{{ $user_info->id }}+"']").prop("selected",true);
+                $("#user_creator_id").prop("disabled",true);
+                @endif
 
                 $("#userModal").modal('show');
             });
@@ -274,7 +289,7 @@
                     });
                 }
             });
-            
+
             //保存审核人
             $("#save_user").click(function () {
                 var id= $("#users_id").val();

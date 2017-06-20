@@ -10,6 +10,7 @@
                         <button type="button" class="btn btn-primary btn-lg lego-right-top-buttons pull-right" data-toggle="modal" data-target="#myModal">
                             创建审核流
                         </button>
+                        <a class="btn btn-primary btn-lg lego-right-top-buttons pull-right" href="{{ action('\WuTongWan\Flow\Http\Controllers\FlowController@getType') }}" role="button">创建资源</a>
                         <div class="ibox-content">
                             <table class="table">
                                 <thead>
@@ -37,7 +38,11 @@
                                         <td>
                                             <button type="button" class="btn btn-primary delete" id="{{ $v->id }}">删除</button>
                                             <button type="button" class="btn btn-success edit" id="{{ $v->id }}">编辑</button>
-                                            <a class="btn btn-default" href="{{ action('\WuTongWan\Flow\Http\Controllers\FlowController@getNode',['flow_id' => $v->id]) }}" role="button">设置节点</a>
+                                            @if ($user_info)
+                                                <a class="btn btn-default" href="{{ action('\WuTongWan\Flow\Http\Controllers\FlowController@getNode',['flow_id' => $v->id, 'user_id' => $user_info->origin_user_id]) }}" role="button">设置节点</a>
+                                            @else
+                                                <a class="btn btn-default" href="{{ action('\WuTongWan\Flow\Http\Controllers\FlowController@getNode',['flow_id' => $v->id]) }}" role="button">设置节点</a>
+                                            @endif
                                         </td>
                                     </tr>
                                 @endforeach
@@ -117,6 +122,11 @@
 @section('java-script')
     <script>
         $(document).ready(function(){
+
+            @if ($user_info)
+                $("#creator_id").find("option[value='"+{{ $user_info->id }}+"']").prop("selected",true);
+                $("#creator_id").prop("disabled",true);
+            @endif
 
             //保存
             $("#save").click(function () {
