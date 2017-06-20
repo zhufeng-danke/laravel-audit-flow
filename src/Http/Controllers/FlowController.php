@@ -36,9 +36,14 @@ class FlowController extends BaseController
         return view('flow::index', compact('title', 'list', 'type_list', 'user_list', 'user_info'));
     }
 
-    public function getType()
+    public function getType(Request $request)
     {
         $title = '审核流资源';
+
+        //创建者ID 业务中用户ID
+        $origin_user_id = $request->input('user_id');
+
+        $user_info = self::getUserInfoByUserId($origin_user_id);
 
         $model_AuditBillType = new \WuTongWan\Flow\Models\AuditBillType();
         $list = $model_AuditBillType->setTable('audit_bill_types as t')->select("t.*", "u.name")->leftJoin("audit_associated_user_informations as u", 'u.id', '=', 't.creator_id')->paginate(10);
@@ -46,7 +51,7 @@ class FlowController extends BaseController
         $model_AuditAssociatedUserInformation = new \WuTongWan\Flow\Models\AuditAssociatedUserInformation();
         $user_list = $model_AuditAssociatedUserInformation->getList();
 
-        return view('flow::type', compact('title', 'list', 'user_list'));
+        return view('flow::type', compact('title', 'list', 'user_list', 'user_info'));
     }
 
     public function createFlow(Request $request)
